@@ -12,6 +12,8 @@ import { connectRedis } from './config/redis.js';
 import { logger } from './utils/logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
+import authRoutes from './routes/auth.routes.js';
+import usuariosRoutes from './routes/usuarios.routes.js';
 
 const app = express();
 
@@ -42,21 +44,25 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ===== Rutas de API (placeholder) =====
-// Aquí se importarán las rutas reales
+// ===== Rutas de API =====
+app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuariosRoutes);
+
+// ===== Documentación de endpoints =====
 app.get('/api', (req, res) => {
   res.json({ 
     message: 'ERP V3.0 API',
     version: '3.0.0',
     endpoints: {
-      auth: '/api/auth',
-      clientes: '/api/clientes',
-      productos: '/api/productos',
-      proyectos: '/api/proyectos',
-      usuarios: '/api/usuarios',
-      licencias: '/api/licencias',
-      integraciones: '/api/integraciones',
-      admin: '/api/admin',
+      auth: '/api/auth (POST login, logout, refresh, register)',
+      usuarios: '/api/usuarios (GET, POST, PUT, DELETE)',
+      clientes: '/api/clientes (Por implementar)',
+      productos: '/api/productos (Por implementar)',
+      proyectos: '/api/proyectos (Por implementar)',
+      tareas: '/api/tareas (Por implementar)',
+      licencias: '/api/licencias (Por implementar)',
+      integraciones: '/api/integraciones (Por implementar)',
+      admin: '/api/admin (Por implementar)',
     }
   });
 });
