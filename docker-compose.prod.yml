@@ -1,0 +1,41 @@
+# docker-compose.prod.yml
+# Overrides para producción - Usar con: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+version: '3.9'
+
+services:
+  postgres:
+    restart: always
+    environment:
+      POSTGRES_INITDB_ARGS: "-c max_connections=200"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+
+  backend:
+    restart: always
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: warn
+    volumes:
+      - ./backend/logs:/app/logs
+      - /app/node_modules
+
+  frontend:
+    restart: always
+
+  nginx:
+    restart: always
+    environment:
+      NODE_ENV: production
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  erp-network:
+    driver: bridge

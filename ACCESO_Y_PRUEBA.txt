@@ -1,0 +1,305 @@
+═══════════════════════════════════════════════════════════════════════════
+  ✅ ERP V3.0 - GUÍA DE ACCESO Y PRUEBA
+═══════════════════════════════════════════════════════════════════════════
+
+AHORA MISMO TU ESTRUCTURA ESTÁ EN:
+📁 erp-v3-empresarial/
+
+PARA EMPEZAR, NECESITAS:
+
+1️⃣  LEER ESTOS ARCHIVOS (en orden):
+   
+   1. erp-v3-empresarial/ACCESO_Y_PRUEBA.md ← NUEVO (Este archivo)
+   2. erp-v3-empresarial/START_HERE.md
+   3. erp-v3-empresarial/INDEX.md
+
+2️⃣  EJECUTAR ESTOS COMANDOS:
+
+   # Navegar a la carpeta
+   cd erp-v3-empresarial
+   
+   # Inicializar Git (opcional pero recomendado)
+   git init
+   git add .
+   git commit -m "Initial commit: ERP V3.0 structure"
+   
+   # Iniciar Docker
+   docker-compose up -d
+   
+   # Esperar 30 segundos...
+   
+   # Verificar que todo esté corriendo
+   docker ps
+
+3️⃣  ACCEDER A ESTAS PÁGINAS:
+
+   ┌─────────────────────────────────────────────┐
+   │  FRONTEND (React - Vite)                    │
+   │  👉 http://localhost:5173                   │
+   │                                             │
+   │  ✓ Interfaz principal                       │
+   │  ✓ Dashboard                                │
+   │  ✓ Módulos (cuando estén implementados)    │
+   │  ✓ Panel Super Admin                        │
+   └─────────────────────────────────────────────┘
+   
+   ┌─────────────────────────────────────────────┐
+   │  BACKEND API (Node.js - Express)            │
+   │  👉 http://localhost:3000/api               │
+   │                                             │
+   │  ✓ Información de la API                    │
+   │  ✓ Endpoints disponibles                    │
+   │  ✓ Status: OK                               │
+   └─────────────────────────────────────────────┘
+   
+   ┌─────────────────────────────────────────────┐
+   │  HEALTH CHECK                               │
+   │  👉 http://localhost:3000/api/health        │
+   │                                             │
+   │  Respuesta: {"status":"ok",...}             │
+   │  Si ves esto → Todo funciona ✅             │
+   └─────────────────────────────────────────────┘
+   
+   ┌─────────────────────────────────────────────┐
+   │  NGINX (Reverse Proxy)                      │
+   │  👉 http://localhost                        │
+   │                                             │
+   │  Redirecciona a frontend                    │
+   │  (Mismo que http://localhost:5173)          │
+   └─────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════
+  📊 PROBLEMAS Y SOLUCIONES
+═══════════════════════════════════════════════════════════════════════════
+
+❌ "No puedo acceder a http://localhost:5173"
+
+   Solución:
+   1. docker ps
+   2. Ver si hay contenedores corriendo
+   3. docker-compose logs frontend
+   4. Si hay error, reiniciar:
+      docker-compose down
+      docker-compose up -d
+
+---
+
+❌ "La página no muestra nada / está en blanco"
+
+   Esto es NORMAL en la primera sesión 😊
+   
+   Razón: El frontend React está listo, pero aún
+   no tiene componentes de UI implementados.
+   
+   ✅ Lo que SÍ está funcionando:
+   • Backend corriendo
+   • APIs disponibles
+   • Base de datos conectada
+   • Todo listo para desarrollo
+   
+   En próxima sesión implementaremos:
+   • Login page
+   • Dashboard
+   • Módulos completos
+
+---
+
+❌ "API dice CORS error"
+
+   Solución:
+   1. Verificar que FRONTEND_URL en .env es correcto
+   2. backend/src/main.ts tiene CORS configurado
+   3. Reiniciar backend:
+      docker-compose restart backend
+
+---
+
+❌ "Base de datos no conecta"
+
+   Solución:
+   1. docker-compose logs postgres
+   2. Esperar 30 segundos (PostgreSQL tarda)
+   3. docker-compose restart postgres
+
+---
+
+❌ "Port 5173 o 3000 ya está en uso"
+
+   Solución:
+   1. docker-compose down
+   2. docker ps (para verificar que se detuvo)
+   3. docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════════════
+  🔍 VERIFICAR QUE TODO FUNCIONA
+═══════════════════════════════════════════════════════════════════════════
+
+✅ Prueba 1: Verificar contenedores
+   
+   docker ps
+   
+   Deberías ver 5 líneas (todos en verde):
+   ├─ erp-postgres
+   ├─ erp-redis
+   ├─ erp-backend
+   ├─ erp-frontend
+   └─ erp-nginx
+
+---
+
+✅ Prueba 2: Health Check
+   
+   curl http://localhost:3000/api/health
+   
+   Respuesta correcta:
+   {"status":"ok","timestamp":"2024-..."}
+
+---
+
+✅ Prueba 3: Info API
+   
+   curl http://localhost:3000/api
+   
+   Respuesta correcta:
+   {
+     "message": "ERP V3.0 API",
+     "version": "3.0.0",
+     "endpoints": {...}
+   }
+
+---
+
+✅ Prueba 4: Acceso Frontend
+   
+   http://localhost:5173
+   
+   ✓ Página carga sin errores
+   ✓ Console de navegador (F12) sin errores rojo
+
+---
+
+✅ Prueba 5: Base de Datos
+   
+   docker-compose exec postgres psql -U erpadmin -d erp_v3
+   
+   \dt  → Ver tablas (deberías ver 9 tablas)
+   \q  → Salir
+
+═══════════════════════════════════════════════════════════════════════════
+  📚 DOCUMENTACIÓN A LEER
+═══════════════════════════════════════════════════════════════════════════
+
+1. ACCESO_Y_PRUEBA.md (este archivo)
+   ← Lo que estás leyendo ahora
+
+2. START_HERE.md
+   ← Guía paso a paso
+
+3. QUICK_REFERENCE.md
+   ← Comandos útiles
+
+4. ARCHITECTURE.md (en docs/)
+   ← Cómo funciona todo
+
+5. GIT_STRUCTURE.md
+   ← Estructura de carpetas
+
+═══════════════════════════════════════════════════════════════════════════
+  🎯 PRÓXIMOS PASOS (Orden recomendado)
+═══════════════════════════════════════════════════════════════════════════
+
+HOY:
+  ✓ Leer ACCESO_Y_PRUEBA.md (este archivo)
+  ✓ Ejecutar: docker-compose up -d
+  ✓ Verificar: http://localhost:3000/api/health
+  ✓ Confirmar que TODO está corriendo
+
+MAÑANA:
+  • Leer documentación completa
+  • Inicializar Git localmente
+  • Crear repositorio remoto (GitHub/GitLab)
+  • Push estructura
+
+PRÓXIMA SESIÓN:
+  • Implementar Backend APIs
+  • Crear componentes Frontend
+  • Sistema de Licencias
+  • Integraciones externas
+  • Panel Super Admin
+
+═══════════════════════════════════════════════════════════════════════════
+  💻 COMANDOS BÁSICOS (Copia y pega)
+═══════════════════════════════════════════════════════════════════════════
+
+# Entrar a la carpeta
+cd erp-v3-empresarial
+
+# Iniciar Docker
+docker-compose up -d
+
+# Ver estado
+docker ps
+
+# Ver logs
+docker-compose logs -f
+
+# Probar API
+curl http://localhost:3000/api/health
+
+# Detener
+docker-compose down
+
+═══════════════════════════════════════════════════════════════════════════
+  🌐 RESUMEN DE URLS
+═══════════════════════════════════════════════════════════════════════════
+
+Página Web (Frontend):
+  👉 http://localhost:5173
+
+API (Backend):
+  👉 http://localhost:3000/api
+
+Health Check:
+  👉 http://localhost:3000/api/health
+
+Nginx (Proxy):
+  👉 http://localhost
+
+Base de Datos (Interna):
+  Host: localhost:5432
+  Usuario: erpadmin
+  BD: erp_v3
+
+═══════════════════════════════════════════════════════════════════════════
+  ✨ ESTADO ACTUAL
+═══════════════════════════════════════════════════════════════════════════
+
+✅ Estructura Git:        COMPLETA
+✅ Backend scaffold:      LISTO
+✅ Frontend scaffold:     LISTO
+✅ Docker Compose:        CONFIGURADO
+✅ Base de Datos:         DISEÑADA
+✅ Seguridad:             IMPLEMENTADA
+✅ Documentación:         COMPLETA
+
+🚀 ESTADO: LISTO PARA INICIAR Y PROBAR
+
+═══════════════════════════════════════════════════════════════════════════
+  ¿LISTO PARA EMPEZAR?
+═══════════════════════════════════════════════════════════════════════════
+
+1. Abre PowerShell
+2. Ejecuta: cd erp-v3-empresarial
+3. Ejecuta: docker-compose up -d
+4. Espera 30 segundos
+5. Abre: http://localhost:3000/api/health
+6. Si ves {"status":"ok",...} → ¡TODO FUNCIONA! ✅
+
+═══════════════════════════════════════════════════════════════════════════
+
+Documento: ACCESO_Y_PRUEBA.md
+Creado: 2024
+Status: ✅ Listo
+Próximo: Ejecutar docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════════════
