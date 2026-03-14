@@ -14,6 +14,10 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import authRoutes from './routes/auth.routes.js';
 import usuariosRoutes from './routes/usuarios.routes.js';
+import clientesRoutes from './routes/clientes.routes.js';
+import productosRoutes from './routes/productos.routes.js';
+import proyectosRoutes from './routes/proyectos.routes.js';
+import tareasRoutes from './routes/tareas.routes.js';
 
 const app = express();
 
@@ -47,6 +51,10 @@ app.get('/api/health', (req, res) => {
 // ===== Rutas de API =====
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/clientes', clientesRoutes);
+app.use('/api/productos', productosRoutes);
+app.use('/api/proyectos', proyectosRoutes);
+app.use('/api/tareas', tareasRoutes);
 
 // ===== Documentación de endpoints =====
 app.get('/api', (req, res) => {
@@ -55,11 +63,11 @@ app.get('/api', (req, res) => {
     version: '3.0.0',
     endpoints: {
       auth: '/api/auth (POST login, logout, refresh, register)',
-      usuarios: '/api/usuarios (GET, POST, PUT, DELETE)',
-      clientes: '/api/clientes (Por implementar)',
-      productos: '/api/productos (Por implementar)',
-      proyectos: '/api/proyectos (Por implementar)',
-      tareas: '/api/tareas (Por implementar)',
+      usuarios: '/api/usuarios (CRUD)',
+      clientes: '/api/clientes (CRUD)',
+      productos: '/api/productos (CRUD)',
+      proyectos: '/api/proyectos (CRUD)',
+      tareas: '/api/tareas (CRUD + Kanban)',
       licencias: '/api/licencias (Por implementar)',
       integraciones: '/api/integraciones (Por implementar)',
       admin: '/api/admin (Por implementar)',
