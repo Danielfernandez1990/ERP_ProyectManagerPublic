@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP V4.0 - Sistema de Gestión Empresarial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        .sortable-placeholder {
+            background-color: #e0e7ff;
+            border: 2px dashed #818cf8;
+            border-radius: 0.5rem;
+        }
+        .kanban-card {
+            cursor: move;
+            transition: all 0.2s;
+        }
+        .kanban-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <script>
+        // ========================
+        // ERP V4.0 - Demo Completa
+        // ========================
+        
+        const app = document.getElementById('root');
+        
+        // Estado Global
+        let state = {
+            isLoggedIn: localStorage.getItem('erp-token') ? true : false,
+            usuario: JSON.parse(localStorage.getItem('erp-usuario') || 'null'),
+            currentPage: 'dashboard',
+            selectedDetailType: null,
+            selectedDetailId: null,
+            
+            // Datos Mock
+            usuarios: [
+                { id: '1', nombre: 'Admin', email: 'admin@erp.com', rol: 'SUPER_ADMIN', jerarquia: 0, estado: 'activo' },
+                { id: '2', nombre: 'Juan Pérez', email: 'juan@erp.com', rol: 'ADMIN', jerarquia: 1, estado: 'activo' },
+                { id: '3', nombre: 'María García', email: 'maria@erp.com', rol: 'GERENTE', jerarquia: 2, estado: 'activo' },
+                { id: '4', nombre: 'Carlos López', email: 'carlos@erp.com', rol: 'USUARIO', jerarquia: 3, estado: 'activo' }
+            ],
+            
+            clientes: [
+                { id: '1', nombre: 'Tech Solutions SA', ruc: '20123456789', email: 'info@techsol.com', telefono: '987654321', contacto: 'Juan Martínez', direccion: 'Av. Principal 123' },
+                { id: '2', nombre: 'Comercial XYZ', ruc: '20987654321', email: 'ventas@xyz.com', telefono: '987123456', contacto: 'María López', direccion: 'Calle Secundaria 456' },
+                { id: '3', nombre: 'Distribuidora Global', ruc: '20555666777', email: 'contacto@dist.com', telefono: '987456789', contacto: 'Carlos Rodríguez', direccion: 'Zona Industrial 789' }
+            ],
+            
+            productos: [
+                { id: '1', nombre: 'Laptop Dell', sku: 'DL-001', categoria: 'Electrónica', precio: 1200, stock: 15 },
+                { id: '2', nombre: 'Mouse Logitech', sku: 'LOG-002', categoria: 'Accesorios', precio: 35, stock: 50 },
+                { id: '3', nombre: 'Teclado Mecánico', sku: 'KEY-003', categoria: 'Accesorios', precio: 120, stock: 25 },
+                { id: '4', nombre: 'Monitor LG 27"', sku: 'MON-004', categoria: 'Pantallas', precio: 450, stock: 10 },
+                { id: '5', nombre: 'Webcam HD', sku: 'WEB-005', categoria: 'Accesorios', precio: 85, stock: 30 }
+            ],
+            
+            proyectos: [
+                { id: '1', nombre: 'Migración Sistema Legacy', cliente: 'Tech Solutions SA', estado: 'En Progreso', riesgo: 'Medio', ingresos: 5000, fecha_inicio: '2025-01-15', fecha_fin: '2025-03-15' },
+                { id: '2', nombre: 'App Móvil Comercio', cliente: 'Comercial XYZ', estado: 'Pendiente', riesgo: 'Alto', ingresos: 8000, fecha_inicio: '2025-02-01', fecha_fin: '2025-04-30' },
+                { id: '3', nombre: 'Portal E-commerce', cliente: 'Distribuidora Global', estado: 'Completado', riesgo: 'Bajo', ingresos: 3000, fecha_inicio: '2024-11-01', fecha_fin: '2025-01-30' }
+            ],
+            
+            tareas: [
+                { id: '1', titulo: 'Diseñar base de datos', proyecto: 'Migración Sistema Legacy', estado: 'PENDIENTE', asignado: 'Juan Pérez', prioridad: 'Alta', fecha_vencimiento: '2025-02-15' },
+                { id: '2', titulo: 'Implementar API REST', proyecto: 'Migración Sistema Legacy', estado: 'PROGRESO', asignado: 'María García', prioridad: 'Alta', fecha_vencimiento: '2025-03-01' },
+                { id: '3', titulo: 'Testing y QA', proyecto: 'Migración Sistema Legacy', estado: 'PENDIENTE', asignado: 'Carlos López', prioridad: 'Media', fecha_vencimiento: '2025-03-10' },
+                { id: '4', titulo: 'Maquetación UI', proyecto: 'App Móvil Comercio', estado: 'COMPLETADO', asignado: 'María García', prioridad: 'Media', fecha_vencimiento: '2025-02-20' },
+                { id: '5', titulo: 'Integración de pagos', proyecto: 'App Móvil Comercio', estado: 'PROGRESO', asignado: 'Juan Pérez', prioridad: 'Alta', fecha_vencimiento: '2025-03-15' }
+            ],
+            
+            segmentos: [
+                { id: '1', nombre: 'Segmento Premium', descripcion: 'Clientes de alto valor', criterios: 'Compras > $5000', estado: 'activo' },
+                { id: '2', nombre: 'Segmento Regular', descripcion: 'Clientes frecuentes', criterios: 'Compras $1000-$5000', estado: 'activo' },
+                { id: '3', nombre: 'Segmento Nuevos', descripcion: 'Clientes nuevos', criterios: 'Clientes < 3 meses', estado: 'activo' }
+            ],
+            
+            configuracionSMTP: {
+                servidor: 'smtp.gmail.com',
+                puerto: 587,
+                usuario: 'alerta@erp.com',
+                password: '••••••••',
+                emailOrigen: 'alerta@erp.com',
+                habilitado: true
+            }
+        };
+        
+        // ========================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ========================
+        
+        function handleLogin(email, password) {
+            if (email === 'admin@erp.com' && password === 'Admin123!') {
+                localStorage.setItem('erp-token', 'fake-token-xyz123');
+                localStorage.setItem('erp-usuario', JSON.stringify({
+                    id: '1',
+                    nombre: 'Admin',
+                    email: 'admin@erp.com',
+                    rol: 'SUPER_ADMIN'
+                }));
+                state.isLoggedIn = true;
+                state.usuario = JSON.parse(localStorage.getItem('erp-usuario'));
+                render();
+            } else {
+                alert('Credenciales inválidas');
+            }
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('erp-token');
+            localStorage.removeItem('erp-usuario');
+            state.isLoggedIn = false;
+            state.usuario = null;
+            render();
+        }
+        
+        // ========================
+        // FUNCIONES DE NAVEGACIÓN
+        // ========================
+        
+        function navigateTo(page) {
+            state.currentPage = page;
+            state.selectedDetailType = null;
+            state.selectedDetailId = null;
+            render();
+        }
+        
+        function showDetail(type, id) {
+            state.selectedDetailType = type;
+            state.selectedDetailId = id;
+            render();
+        }
+        
+        function closeDetail() {
+            state.selectedDetailType = null;
+            state.selectedDetailId = null;
+            render();
+        }
+        
+        // ========================
+        // CRUD OPERATIONS
+        // ========================
+        
+        function deleteItem(type, id) {
+            if (confirm('¿Está seguro de que desea eliminar este elemento?')) {
+                state[type] = state[type].filter(item => item.id !== id);
+                showNotification('Elemento eliminado correctamente');
+                render();
+            }
+        }
+        
+        function editItem(type, id) {
+            alert('Función de edición disponible en versión mejorada');
+        }
+        
+        function addItem(type) {
+            alert('Función de agregar disponible en versión mejorada');
+        }
+        
+        function updateTaskState(taskId, newState) {
+            const task = state.tareas.find(t => t.id === taskId);
+            if (task) {
+                task.estado = newState;
+                showNotification('Tarea actualizada');
+                render();
+            }
+        }
+        
+        function updateSMTPConfig(serverData) {
+            state.configuracionSMTP = { ...state.configuracionSMTP, ...serverData };
+            showNotification('Configuración SMTP actualizada');
+            render();
+        }
+        
+        function showNotification(message) {
+            console.log('✓', message);
+        }
+        
+        // ========================
+        // COMPONENTES
+        // ========================
+        
+        function LoginPage() {
+            return `
+                <div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+                    <div class="w-full max-w-md bg-white rounded-lg shadow-xl">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-center">
+                            <h1 class="text-4xl font-bold text-white mb-2">ERP V4.0</h1>
+                            <p class="text-blue-100">Sistema de Gestión Empresarial</p>
+                        </div>
+                        
+                        <form onsubmit="handleLoginForm(event)" class="p-8 space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" id="email" value="admin@erp.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                                <input type="password" id="password" value="Admin123!" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200">
+                                Iniciar Sesión
+                            </button>
+                            
+                            <div class="p-4 bg-blue-50 rounded-lg text-center">
+                                <p class="text-xs text-gray-600 mb-2">Credenciales de demo:</p>
+                                <p class="text-xs text-gray-700"><strong>Email:</strong> admin@erp.com</p>
+                                <p class="text-xs text-gray-700"><strong>Contraseña:</strong> Admin123!</p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function Header() {
+            return `
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="flex items-center justify-between h-16 px-6">
+                        <h1 class="text-xl font-bold text-gray-800">ERP V4.0</h1>
+                        <div class="flex items-center gap-4">
+                            <button class="p-2 hover:bg-gray-100 rounded-lg">🔔</button>
+                            <div class="relative">
+                                <button onclick="toggleUserMenu()" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
+                                    <span class="text-sm font-medium text-gray-700">${state.usuario.nombre}</span>
+                                    <span>▼</span>
+                                </button>
+                                <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                    <div class="p-3 border-b border-gray-200">
+                                        <p class="text-sm font-medium text-gray-800">${state.usuario.nombre}</p>
+                                        <p class="text-xs text-gray-500">${state.usuario.email}</p>
+                                        <p class="text-xs text-blue-600 font-semibold">${state.usuario.rol}</p>
+                                    </div>
+                                    <button onclick="navigateTo('perfil')" class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
+                                        👤 Mi Perfil
+                                    </button>
+                                    <button onclick="handleLogout()" class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                                        Cerrar sesión
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            `;
+        }
+        
+        function Sidebar() {
+            const isActive = (page) => state.currentPage === page ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800';
+            
+            return `
+                <aside class="w-64 bg-gray-900 text-white p-4 space-y-2">
+                    <nav class="space-y-2">
+                        <a href="#" onclick="navigateTo('dashboard')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('dashboard')}">📊 Dashboard</a>
+                        <a href="#" onclick="navigateTo('usuarios')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('usuarios')}">👥 Usuarios</a>
+                        <a href="#" onclick="navigateTo('clientes')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('clientes')}">🏢 Clientes</a>
+                        <a href="#" onclick="navigateTo('productos')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('productos')}">📦 Productos</a>
+                        <a href="#" onclick="navigateTo('proyectos')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('proyectos')}">💼 Proyectos</a>
+                        <a href="#" onclick="navigateTo('tareas')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('tareas')}">✓ Kanban</a>
+                        <a href="#" onclick="navigateTo('segmentos')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('segmentos')}">🎯 Segmentos</a>
+                        <a href="#" onclick="navigateTo('configuracion')" class="flex items-center gap-3 px-4 py-3 rounded-lg ${isActive('configuracion')}">⚙️ Configuración</a>
+                    </nav>
+                </aside>
+            `;
+        }
+        
+        function DashboardPage() {
+            const stats = [
+                { label: 'Usuarios', value: state.usuarios.length, color: 'blue', icon: '👥' },
+                { label: 'Clientes', value: state.clientes.length, color: 'green', icon: '🏢' },
+                { label: 'Productos', value: state.productos.length, color: 'purple', icon: '📦' },
+                { label: 'Proyectos', value: state.proyectos.length, color: 'yellow', icon: '💼' },
+                { label: 'Tareas', value: state.tareas.length, color: 'red', icon: '✓' }
+            ];
+            
+            const ingresosTotales = state.proyectos.reduce((sum, p) => sum + p.ingresos, 0);
+            
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+                            <p class="text-gray-600 mt-1">Bienvenido a tu panel de control</p>
+                        </div>
+                        
+                        <!-- Stats grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            ${stats.map(stat => `
+                                <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-gray-600 text-sm font-medium">${stat.label}</p>
+                                            <p class="text-3xl font-bold text-gray-900 mt-2">${stat.value}</p>
+                                        </div>
+                                        <div class="p-4 rounded-lg bg-${stat.color}-500 text-white text-2xl">${stat.icon}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Ingresos totales -->
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow p-6">
+                            <h2 class="text-lg font-semibold">Ingresos Totales (Proyectos)</h2>
+                            <p class="text-4xl font-bold mt-2">$${ingresosTotales.toLocaleString()}</p>
+                        </div>
+                        
+                        <!-- Últimos clientes -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h2 class="text-lg font-semibold text-gray-900 mb-4">Últimos Clientes</h2>
+                            <div class="space-y-3">
+                                ${state.clientes.slice(0, 3).map(cliente => `
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p class="font-medium text-gray-900">${cliente.nombre}</p>
+                                            <p class="text-sm text-gray-500">${cliente.email}</p>
+                                        </div>
+                                        <span class="text-sm text-blue-600 cursor-pointer" onclick="showDetail('cliente', '${cliente.id}')">Ver detalles →</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function UsuariosPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Usuarios</h1>
+                                <p class="text-gray-600 mt-1">Gestión de usuarios con jerarquía</p>
+                            </div>
+                            <button onclick="addItem('usuarios')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">+ Agregar Usuario</button>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Rol</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Jerarquía</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Estado</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    ${state.usuarios.map(usuario => `
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 text-sm text-gray-900">${usuario.nombre}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">${usuario.email}</td>
+                                            <td class="px-6 py-4 text-sm"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">${usuario.rol}</span></td>
+                                            <td class="px-6 py-4 text-sm text-gray-900">Nivel ${usuario.jerarquia}</td>
+                                            <td class="px-6 py-4 text-sm"><span class="bg-green-100 text-green-800 px-2 py-1 rounded">${usuario.estado}</span></td>
+                                            <td class="px-6 py-4 text-sm space-x-2">
+                                                <button onclick="editItem('usuarios', '${usuario.id}')" class="text-blue-600 hover:text-blue-700">Editar</button>
+                                                <button onclick="deleteItem('usuarios', '${usuario.id}')" class="text-red-600 hover:text-red-700">Eliminar</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function ClientesPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Clientes</h1>
+                                <p class="text-gray-600 mt-1">Gestión de clientes con contacto</p>
+                            </div>
+                            <button onclick="addItem('clientes')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">+ Agregar Cliente</button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${state.clientes.map(cliente => `
+                                <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer" onclick="showDetail('cliente', '${cliente.id}')">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">${cliente.nombre}</h3>
+                                            <p class="text-sm text-gray-500 mt-1">RUC: ${cliente.ruc}</p>
+                                        </div>
+                                        <button onclick="deleteItem('clientes', '${cliente.id}')" class="text-red-600 hover:text-red-700 text-lg">×</button>
+                                    </div>
+                                    <div class="space-y-2 text-sm text-gray-600">
+                                        <p>📧 ${cliente.email}</p>
+                                        <p>📞 ${cliente.telefono}</p>
+                                        <p>👤 ${cliente.contacto}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function ProductosPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Productos</h1>
+                                <p class="text-gray-600 mt-1">Gestión de inventario de productos</p>
+                            </div>
+                            <button onclick="addItem('productos')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">+ Agregar Producto</button>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">SKU</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Categoría</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Precio</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Stock</th>
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    ${state.productos.map(producto => `
+                                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="showDetail('producto', '${producto.id}')">
+                                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${producto.nombre}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">${producto.sku}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">${producto.categoria}</td>
+                                            <td class="px-6 py-4 text-sm font-semibold text-gray-900">$${producto.precio}</td>
+                                            <td class="px-6 py-4 text-sm">
+                                                <span class="bg-${producto.stock < 20 ? 'yellow' : 'green'}-100 text-${producto.stock < 20 ? 'yellow' : 'green'}-800 px-2 py-1 rounded">${producto.stock} unidades</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm space-x-2">
+                                                <button onclick="editItem('productos', '${producto.id}')" class="text-blue-600 hover:text-blue-700">Editar</button>
+                                                <button onclick="deleteItem('productos', '${producto.id}')" class="text-red-600 hover:text-red-700">Eliminar</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function ProyectosPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Proyectos</h1>
+                                <p class="text-gray-600 mt-1">Gestión y seguimiento de proyectos</p>
+                            </div>
+                            <button onclick="addItem('proyectos')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">+ Agregar Proyecto</button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${state.proyectos.map(proyecto => `
+                                <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer" onclick="showDetail('proyecto', '${proyecto.id}')">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h3 class="font-semibold text-gray-900">${proyecto.nombre}</h3>
+                                        <button onclick="deleteItem('proyectos', '${proyecto.id}')" class="text-red-600 hover:text-red-700">×</button>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-3">📋 ${proyecto.cliente}</p>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-600">Estado:</span>
+                                            <span class="bg-${proyecto.estado === 'Completado' ? 'green' : proyecto.estado === 'En Progreso' ? 'blue' : 'yellow'}-100 text-${proyecto.estado === 'Completado' ? 'green' : proyecto.estado === 'En Progreso' ? 'blue' : 'yellow'}-800 px-2 py-1 rounded">${proyecto.estado}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-600">Riesgo:</span>
+                                            <span class="text-${proyecto.riesgo === 'Alto' ? 'red' : proyecto.riesgo === 'Medio' ? 'yellow' : 'green'}-600">${proyecto.riesgo}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-2 border-t">
+                                            <span class="text-gray-600">Ingresos:</span>
+                                            <span class="font-semibold text-green-600">$${proyecto.ingresos}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function KanbanPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Tablero Kanban</h1>
+                                <p class="text-gray-600 mt-1">Arrastra las tareas para cambiar su estado</p>
+                            </div>
+                            <button onclick="addItem('tareas')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">+ Agregar Tarea</button>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-6 pb-6">
+                            ${['PENDIENTE', 'PROGRESO', 'COMPLETADO'].map(estado => {
+                                const tareasEstado = state.tareas.filter(t => t.estado === estado);
+                                return `
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <h3 class="font-semibold text-gray-900 mb-4">
+                                            ${estado === 'PENDIENTE' ? '📋 Por Hacer' : estado === 'PROGRESO' ? '🔄 En Progreso' : '✅ Completado'}
+                                            <span class="text-sm text-gray-500 ml-2">(${tareasEstado.length})</span>
+                                        </h3>
+                                        <div class="space-y-3" id="kanban-${estado}">
+                                            ${tareasEstado.map(tarea => `
+                                                <div class="kanban-card bg-white rounded-lg shadow p-4 hover:shadow-md" draggable="true" ondragstart="dragStart(event, '${tarea.id}')" onclick="showDetail('tarea', '${tarea.id}')">
+                                                    <p class="font-medium text-gray-900">${tarea.titulo}</p>
+                                                    <p class="text-xs text-gray-500 mt-2">📁 ${tarea.proyecto}</p>
+                                                    <p class="text-xs text-gray-500">👤 ${tarea.asignado}</p>
+                                                    <div class="flex items-center justify-between mt-3">
+                                                        <span class="text-xs bg-${tarea.prioridad === 'Alta' ? 'red' : tarea.prioridad === 'Media' ? 'yellow' : 'green'}-100 text-${tarea.prioridad === 'Alta' ? 'red' : tarea.prioridad === 'Media' ? 'yellow' : 'green'}-800 px-2 py-1 rounded">${tarea.prioridad}</span>
+                                                        <button onclick="deleteItem('tareas', '${tarea.id}')" class="text-red-600 hover:text-red-700 text-sm">×</button>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </main>
+                
+                <script>
+                    function dragStart(e, taskId) {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('taskId', taskId);
+                    }
+                    
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const estados = ['PENDIENTE', 'PROGRESO', 'COMPLETADO'];
+                        estados.forEach(estado => {
+                            const kanban = document.getElementById('kanban-' + estado);
+                            if (kanban) {
+                                kanban.ondrop = (e) => handleDrop(e, estado);
+                                kanban.ondragover = (e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                };
+                            }
+                        });
+                    });
+                </script>
+            `;
+        }
+        
+        function handleDrop(e, nuevoEstado) {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData('taskId');
+            updateTaskState(taskId, nuevoEstado);
+        }
+        
+        function SegmentosPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Segmentos</h1>
+                                <p class="text-gray-600 mt-1">Gestión de segmentos de clientes</p>
+                            </div>
+                            <button onclick="addItem('segmentos')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">+ Agregar Segmento</button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${state.segmentos.map(segmento => `
+                                <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h3 class="font-semibold text-gray-900">${segmento.nombre}</h3>
+                                        <button onclick="deleteItem('segmentos', '${segmento.id}')" class="text-red-600 hover:text-red-700">×</button>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-3">${segmento.descripcion}</p>
+                                    <div class="space-y-2 text-sm">
+                                        <p class="text-gray-500">Criterios: ${segmento.criterios}</p>
+                                        <p class="inline-block bg-${segmento.estado === 'activo' ? 'green' : 'gray'}-100 text-${segmento.estado === 'activo' ? 'green' : 'gray'}-800 px-2 py-1 rounded text-xs">${segmento.estado}</p>
+                                    </div>
+                                    <button onclick="editItem('segmentos', '${segmento.id}')" class="w-full mt-4 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg text-sm font-medium">Editar</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function ConfiguracionPage() {
+            return `
+                <main class="flex-1 overflow-y-auto p-6">
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Configuración</h1>
+                            <p class="text-gray-600 mt-1">Gestión de configuración del sistema</p>
+                        </div>
+                        
+                        <!-- SMTP Configuration -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-6">⚙️ Configuración SMTP para Alertas</h2>
+                            
+                            <form onsubmit="handleSMTPForm(event)" class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Servidor SMTP</label>
+                                        <input type="text" value="${state.configuracionSMTP.servidor}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Puerto</label>
+                                        <input type="number" value="${state.configuracionSMTP.puerto}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Usuario/Email</label>
+                                        <input type="email" value="${state.configuracionSMTP.usuario}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                                        <input type="password" value="${state.configuracionSMTP.password}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email de Origen</label>
+                                    <input type="email" value="${state.configuracionSMTP.emailOrigen}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                
+                                <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                                    <input type="checkbox" id="habilitado" ${state.configuracionSMTP.habilitado ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <label for="habilitado" class="text-sm font-medium text-gray-700">Habilitar alertas por correo</label>
+                                </div>
+                                
+                                <div class="flex gap-3">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">💾 Guardar Configuración</button>
+                                    <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-medium">🧪 Enviar Email de Prueba</button>
+                                </div>
+                            </form>
+                            
+                            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p class="text-sm text-blue-900"><strong>ℹ️ Información:</strong> Las alertas se enviarán automáticamente cuando:</p>
+                                <ul class="text-sm text-blue-800 mt-2 space-y-1 ml-4">
+                                    <li>✓ Una tarea cambie de estado</li>
+                                    <li>✓ Se cree un nuevo proyecto</li>
+                                    <li>✓ Venza una tarea (24h antes)</li>
+                                    <li>✓ Un cliente genere una solicitud</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        // Modal Detail Components
+        function ClienteDetailModal() {
+            const cliente = state.clientes.find(c => c.id === state.selectedDetailId);
+            if (!cliente) return '';
+            
+            return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="closeDetail()">
+                    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-8 fade-in" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">Detalles del Cliente</h2>
+                            <button onclick="closeDetail()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Nombre</p>
+                                    <p class="text-lg font-semibold text-gray-900">${cliente.nombre}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">RUC</p>
+                                    <p class="text-lg font-semibold text-gray-900">${cliente.ruc}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Email</p>
+                                    <p class="text-lg font-semibold text-gray-900">${cliente.email}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Teléfono</p>
+                                    <p class="text-lg font-semibold text-gray-900">${cliente.telefono}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Contacto Principal</p>
+                                    <p class="text-lg font-semibold text-gray-900">${cliente.contacto}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Dirección</p>
+                                    <p class="text-lg font-semibold text-gray-900">${cliente.direccion}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 flex gap-3">
+                            <button onclick="editItem('clientes', '${cliente.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">Editar</button>
+                            <button onclick="closeDetail()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function ProductoDetailModal() {
+            const producto = state.productos.find(p => p.id === state.selectedDetailId);
+            if (!producto) return '';
+            
+            return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="closeDetail()">
+                    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-8 fade-in" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">Detalles del Producto</h2>
+                            <button onclick="closeDetail()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Nombre</p>
+                                    <p class="text-lg font-semibold text-gray-900">${producto.nombre}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">SKU</p>
+                                    <p class="text-lg font-semibold text-gray-900">${producto.sku}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Categoría</p>
+                                    <p class="text-lg font-semibold text-gray-900">${producto.categoria}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Precio</p>
+                                    <p class="text-lg font-semibold text-green-600">$${producto.precio}</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-gray-600">Stock Disponible</p>
+                                <p class="text-lg font-semibold text-gray-900">${producto.stock} unidades</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 flex gap-3">
+                            <button onclick="editItem('productos', '${producto.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">Editar</button>
+                            <button onclick="closeDetail()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function ProyectoDetailModal() {
+            const proyecto = state.proyectos.find(p => p.id === state.selectedDetailId);
+            if (!proyecto) return '';
+            
+            return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="closeDetail()">
+                    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-8 fade-in" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">Detalles del Proyecto</h2>
+                            <button onclick="closeDetail()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Nombre</p>
+                                <p class="text-lg font-semibold text-gray-900">${proyecto.nombre}</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Cliente</p>
+                                    <p class="text-lg font-semibold text-gray-900">${proyecto.cliente}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Estado</p>
+                                    <p class="text-lg font-semibold text-gray-900">${proyecto.estado}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Fecha Inicio</p>
+                                    <p class="text-lg font-semibold text-gray-900">${proyecto.fecha_inicio}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Fecha Fin</p>
+                                    <p class="text-lg font-semibold text-gray-900">${proyecto.fecha_fin}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Riesgo</p>
+                                    <p class="text-lg font-semibold text-${proyecto.riesgo === 'Alto' ? 'red' : proyecto.riesgo === 'Medio' ? 'yellow' : 'green'}-600">${proyecto.riesgo}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Ingresos</p>
+                                    <p class="text-lg font-semibold text-green-600">$${proyecto.ingresos}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 flex gap-3">
+                            <button onclick="editItem('proyectos', '${proyecto.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">Editar</button>
+                            <button onclick="closeDetail()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function TareaDetailModal() {
+            const tarea = state.tareas.find(t => t.id === state.selectedDetailId);
+            if (!tarea) return '';
+            
+            return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onclick="closeDetail()">
+                    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-8 fade-in" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">Detalles de la Tarea</h2>
+                            <button onclick="closeDetail()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Título</p>
+                                <p class="text-lg font-semibold text-gray-900">${tarea.titulo}</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Proyecto</p>
+                                    <p class="text-lg font-semibold text-gray-900">${tarea.proyecto}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Estado</p>
+                                    <p class="text-lg font-semibold text-gray-900">${tarea.estado}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Asignado a</p>
+                                    <p class="text-lg font-semibold text-gray-900">${tarea.asignado}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Prioridad</p>
+                                    <p class="text-lg font-semibold text-${tarea.prioridad === 'Alta' ? 'red' : tarea.prioridad === 'Media' ? 'yellow' : 'green'}-600">${tarea.prioridad}</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-gray-600">Fecha de Vencimiento</p>
+                                <p class="text-lg font-semibold text-gray-900">${tarea.fecha_vencimiento}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 flex gap-3">
+                            <button onclick="editItem('tareas', '${tarea.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">Editar</button>
+                            <button onclick="closeDetail()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ========================
+        // RENDERIZADOR PRINCIPAL
+        // ========================
+        
+        function render() {
+            let html = '';
+            
+            if (!state.isLoggedIn) {
+                html = LoginPage();
+            } else {
+                html = `
+                    <div class="flex flex-col h-screen bg-gray-50">
+                        ${Header()}
+                        <div class="flex flex-1 overflow-hidden">
+                            ${Sidebar()}
+                            ${(() => {
+                                switch(state.currentPage) {
+                                    case 'dashboard': return DashboardPage();
+                                    case 'usuarios': return UsuariosPage();
+                                    case 'clientes': return ClientesPage();
+                                    case 'productos': return ProductosPage();
+                                    case 'proyectos': return ProyectosPage();
+                                    case 'tareas': return KanbanPage();
+                                    case 'segmentos': return SegmentosPage();
+                                    case 'configuracion': return ConfiguracionPage();
+                                    default: return DashboardPage();
+                                }
+                            })()}
+                        </div>
+                    </div>
+                    
+                    ${(() => {
+                        if (state.selectedDetailType === 'cliente') return ClienteDetailModal();
+                        if (state.selectedDetailType === 'producto') return ProductoDetailModal();
+                        if (state.selectedDetailType === 'proyecto') return ProyectoDetailModal();
+                        if (state.selectedDetailType === 'tarea') return TareaDetailModal();
+                        return '';
+                    })()}
+                `;
+            }
+            
+            app.innerHTML = html;
+        }
+        
+        function handleLoginForm(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            handleLogin(email, password);
+        }
+        
+        function handleSMTPForm(e) {
+            e.preventDefault();
+            showNotification('Configuración SMTP guardada correctamente');
+            alert('Configuración guardada. En producción esto se sincronizaría con el backend en /api/configuracion/smtp');
+        }
+        
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+        
+        // Iniciar
+        render();
+    </script>
+</body>
+</html>
