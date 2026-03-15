@@ -1,0 +1,251 @@
+# 📋 ERP V4.0 - NUEVAS FUNCIONALIDADES IMPLEMENTADAS
+
+## ✅ Problemas Solucionados
+
+### 1. **CRUD de Segmentos** ✓
+- Nuevo módulo de **Segmentos** en el menú lateral
+- Vista de tarjetas con segmentos definidos:
+  - Segmento Premium
+  - Segmento Regular
+  - Segmento Nuevos
+- Funcionalidades: **Ver, Editar, Eliminar, Agregar**
+
+### 2. **Tablero Kanban Mejorado** ✓
+- **Drag & Drop funcional** - Arrastra tareas entre columnas
+- Tres estados: 📋 Por Hacer | 🔄 En Progreso | ✅ Completado
+- Las tareas cambian de estado automáticamente al soltar
+- Mostrando contadores por columna (5 tareas total)
+- Prioridad visual (Alta=Rojo, Media=Amarillo, Baja=Verde)
+
+### 3. **Modales de Detalle** ✓
+- **Clientes**: Ver RUC, Email, Teléfono, Contacto, Dirección
+- **Productos**: Ver SKU, Categoría, Precio, Stock disponible
+- **Proyectos**: Ver Cliente, Estado, Fechas, Riesgo, Ingresos
+- **Tareas**: Ver Proyecto, Estado, Asignado, Prioridad, Vencimiento
+
+### 4. **Jerarquía de Usuarios** ✓
+- Implementada estructura de jerarquía (Nivel 0-3):
+  - **Nivel 0**: SUPER_ADMIN (Admin)
+  - **Nivel 1**: ADMIN (Juan Pérez)
+  - **Nivel 2**: GERENTE (María García)
+  - **Nivel 3**: USUARIO (Carlos López)
+- Tabla de Usuarios mostrando rol y nivel de jerarquía
+
+### 5. **Configuración SMTP** ✓
+- Sección **⚙️ Configuración** en el menú
+- Formulario para configurar:
+  - Servidor SMTP (ej: smtp.gmail.com)
+  - Puerto (ej: 587)
+  - Usuario/Email
+  - Contraseña
+  - Email de origen
+  - Toggle para habilitar/deshabilitar
+- Información sobre cuándo se envían alertas
+
+---
+
+## 📱 CÓMO ACCEDER
+
+### **Opción 1: Archivo HTML directo (Recomendado para pruebas)**
+```bash
+# En Windows (PowerShell)
+cd C:\tmp\ERP_ProyectManagerPublic\frontend
+# Abre app-v4-completa.html en tu navegador
+# O usa Python para servir:
+python -m http.server 8000
+# Luego accede a: http://localhost:8000/app-v4-completa.html
+```
+
+### **Opción 2: Desde GitHub**
+```
+https://github.com/Danielfernandez1990/ERP_ProyectManagerPublic
+Rama: main
+Archivo: frontend/app-v4-completa.html
+```
+
+### **Credenciales de Login**
+```
+Email:    admin@erp.com
+Password: Admin123!
+```
+
+---
+
+## 🎯 CARACTERÍSTICAS PRINCIPALES
+
+### **Dashboard**
+- Tarjetas de estadísticas (Usuarios, Clientes, Productos, Proyectos, Tareas)
+- Ingresos totales calculados desde proyectos: **$16,000**
+- Enlaces rápidos a últimos clientes
+
+### **Usuarios**
+- Tabla completa con 4 usuarios demo
+- Columnas: Nombre, Email, Rol, Jerarquía, Estado, Acciones
+- Botones Editar/Eliminar funcionales
+
+### **Clientes**
+- Vista de tarjetas con información de clientes
+- Contacto principal, email, teléfono visible
+- Click en tarjeta abre modal con detalles completos
+- Incluyendo RUC y dirección
+
+### **Productos**
+- Tabla con Nombre, SKU, Categoría, Precio, Stock
+- Stock: Amarillo si < 20 unidades, Verde si ≥ 20
+- Click en fila abre modal de detalles
+- Precios mostrados en USD
+
+### **Proyectos**
+- Vista de tarjetas con información resumida
+- Estados: Completado (Verde), En Progreso (Azul), Pendiente (Amarillo)
+- Riesgo visible: Alto (Rojo), Medio (Amarillo), Bajo (Verde)
+- Ingresos mostrados en USD
+- Click para ver detalles completos con fechas
+
+### **Kanban (Tareas)**
+- **¡AHORA CON DRAG & DROP!** ✨
+- Arrastra una tarjeta de una columna a otra
+- El estado se actualiza automáticamente
+- 5 tareas distribuidas en 3 columnas
+- Prioridades de color
+- Click para ver detalles de la tarea
+
+### **Segmentos**
+- Nueva sección con 3 segmentos predefinidos
+- Criterios de segmentación visibles
+- Estado (Activo/Inactivo)
+- Botón Editar en cada tarjeta
+
+### **Configuración SMTP**
+- Formulario completo para alertas por correo
+- Campos pre-rellenados con valores demo
+- Información sobre eventos que generan alertas:
+  - Cambio de estado de tareas
+  - Creación de proyectos
+  - Vencimiento de tareas (24h antes)
+  - Solicitudes de clientes
+- Botón para guardar y probar
+
+---
+
+## 🔄 INTEGRACIÓN CON BACKEND (Próximo paso)
+
+Para conectar con tu backend de 27 endpoints REST, necesitas:
+
+### **Endpoints necesarios** (si no existen, crearlos):
+
+```
+GET  /api/segmentos              - Listar segmentos
+POST /api/segmentos              - Crear segmento
+PUT  /api/segmentos/:id          - Actualizar segmento
+DELETE /api/segmentos/:id        - Eliminar segmento
+
+GET  /api/configuracion/smtp     - Obtener config SMTP
+PUT  /api/configuracion/smtp     - Actualizar config SMTP
+POST /api/configuracion/smtp/test - Enviar email de prueba
+
+GET  /api/tareas                 - Listar tareas (ya existe)
+PATCH /api/tareas/:id/estado     - Actualizar estado de tarea
+```
+
+### **Cambios en el archivo HTML**
+
+En la próxima iteración, modificaremos las funciones para que hagan llamadas `fetch()` al backend:
+
+```javascript
+// Ejemplo de cómo quedará:
+async function getSegmentos() {
+    const response = await fetch('/api/segmentos');
+    return response.json();
+}
+
+async function updateSMTPConfig(config) {
+    await fetch('/api/configuracion/smtp', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+    });
+}
+```
+
+---
+
+## 📊 DATOS DEMO INCLUIDOS
+
+### **Usuarios (4)**
+1. Admin - admin@erp.com - SUPER_ADMIN (Nivel 0)
+2. Juan Pérez - juan@erp.com - ADMIN (Nivel 1)
+3. María García - maria@erp.com - GERENTE (Nivel 2)
+4. Carlos López - carlos@erp.com - USUARIO (Nivel 3)
+
+### **Clientes (3)**
+1. Tech Solutions SA - RUC 20123456789
+2. Comercial XYZ - RUC 20987654321
+3. Distribuidora Global - RUC 20555666777
+
+### **Productos (5)**
+1. Laptop Dell - $1200
+2. Mouse Logitech - $35
+3. Teclado Mecánico - $120
+4. Monitor LG 27" - $450
+5. Webcam HD - $85
+
+### **Proyectos (3)**
+1. Migración Sistema Legacy - $5000
+2. App Móvil Comercio - $8000
+3. Portal E-commerce - $3000
+
+### **Tareas (5)**
+- Distribuidas entre 3 estados
+- Con prioridades y asignaciones
+- Fechas de vencimiento
+
+### **Segmentos (3)**
+1. Premium - Clientes alto valor
+2. Regular - Clientes frecuentes
+3. Nuevos - Clientes recientes
+
+---
+
+## 🚀 PRÓXIMOS PASOS
+
+1. ✅ **CRUD Segmentos** - Implementado
+2. ✅ **Kanban Drag-Drop** - Implementado
+3. ✅ **Modales de Detalle** - Implementado
+4. ✅ **Jerarquía Usuarios** - Implementado
+5. ✅ **SMTP Config** - Implementado
+6. ⏳ **Integración Backend** - En desarrollo
+7. ⏳ **Real-time Updates** - WebSockets
+8. ⏳ **Advanced Admin Panel** - Super Admin features
+
+---
+
+## 📝 NOTAS TÉCNICAS
+
+- Archivo HTML: **app-v4-completa.html** (59KB, autónomo)
+- No requiere dependencias externas (solo Tailwind CDN)
+- Estado manejado completamente en JavaScript
+- LocalStorage para persistencia entre recargas
+- Drag & Drop usando Sortable.js (CDN)
+- Compatible con navegadores modernos (Chrome, Firefox, Safari, Edge)
+
+---
+
+## ✨ CAMBIOS DESDE V3.0
+
+| Aspecto | V3.0 | V4.0 |
+|--------|------|------|
+| Páginas | 5 | 8 |
+| CRUD Segmentos | ❌ | ✅ |
+| Kanban Drag-Drop | ❌ | ✅ |
+| Modales de Detalle | ❌ | ✅ |
+| Jerarquía Usuarios | ❌ | ✅ |
+| SMTP Configuración | ❌ | ✅ |
+| Líneas de código | ~600 | ~1500 |
+
+---
+
+**Última actualización:** 14-03-2026
+**Commit:** c796c40
+**Estado:** ✅ LISTO PARA TESTING
+
