@@ -1,4 +1,4 @@
-# 🎬 TUTORIAL VISUAL: CÓMO PROBAR ERP V4.0
+# 🎬 TUTORIAL VISUAL: CÓMO PROBAR ERP V3.01
 
 ## 📥 DESCARGA EL ARCHIVO
 
@@ -316,7 +316,7 @@ Después de completar todas las pruebas:
 
 Si lograste completar todas las pruebas, entonces:
 
-**✨ ERP V4.0 ESTÁ COMPLETAMENTE FUNCIONAL ✨**
+**✨ ERP V3.01 ESTÁ COMPLETAMENTE FUNCIONAL ✨**
 
 Todos los 8 problemas han sido resueltos y el sistema está listo para:
 1. Pruebas de usuario
@@ -325,7 +325,7 @@ Todos los 8 problemas han sido resueltos y el sistema está listo para:
 
 ---
 
-**¡Disfruta tu ERP V4.0! 🚀**
+**¡Disfruta tu ERP V3.01! 🚀**
 
 Última actualización: 14-03-2026
 Versión: 4.0.0

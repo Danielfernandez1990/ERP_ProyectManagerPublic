@@ -1,4 +1,4 @@
-# 🎯 ACCESO DIRECTO - ERP V4.0
+# 🎯 ACCESO DIRECTO - ERP V3.01
 
 ## ⚡ COMIENZA AQUÍ
 
@@ -106,7 +106,7 @@ Si ves todas estas funcionalidades:
 ✅ Jerarquía de usuarios (4 niveles)
 ✅ SMTP configuración lista
 
-→ ERP V4.0 ESTÁ 100% FUNCIONAL ✨
+→ ERP V3.01 ESTÁ 100% FUNCIONAL ✨
 ```
 
 ---
@@ -150,7 +150,7 @@ Formato:   HTML5 + JavaScript puro
 
 ## 🚀 SIGUIENTE PASO
 
-Una vez validado V4.0, el próximo paso es:
+Una vez validado V3.01, el próximo paso es:
 
 **Conectar con Backend REST API (27 endpoints existentes)**
 
@@ -162,12 +162,12 @@ Esto requiere:
 
 ---
 
-## 🎉 ¡DISFRUTA TU ERP V4.0!
+## 🎉 ¡DISFRUTA TU ERP V3.01!
 
 ```
 ╔════════════════════════════════════════╗
 ║                                        ║
-║  ✨ ERP V4.0 COMPLETAMENTE FUNCIONAL ✨║
+║  ✨ ERP V3.01 COMPLETAMENTE FUNCIONAL ✨║
 ║                                        ║
 ║  Todos los 8 problemas solucionados    ║
 ║  Documentación completa                ║
